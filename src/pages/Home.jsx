@@ -28,25 +28,25 @@ export default function Home() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Plan lekcji</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="font-heading text-3xl font-extrabold text-slate-900">Plan lekcji</h1>
+          <p className="mt-2 text-xs font-bold uppercase tracking-wider text-brand-500">
             II Liceum Ogólnokształcące im. T. Kościuszki w Sandomierzu
           </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
               <LogIn size={18} />
             </div>
-            <h2 className="text-base font-semibold text-slate-900">Panel administratora</h2>
+            <h2 className="font-heading text-base font-bold text-slate-900">Panel administratora</h2>
           </div>
 
           {session ? (
             <button
               type="button"
               onClick={() => navigate('/admin')}
-              className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
             >
               Przejdź do panelu administratora
             </button>
@@ -59,7 +59,7 @@ export default function Home() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                   placeholder="admin@2lo-sandomierz.pl"
                 />
               </div>
@@ -70,7 +70,7 @@ export default function Home() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                   placeholder="••••••••"
                 />
               </div>
@@ -78,7 +78,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50"
+                className="w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50"
               >
                 {loading ? 'Logowanie…' : 'Zaloguj się'}
               </button>
@@ -88,7 +88,7 @@ export default function Home() {
 
         <Link
           to="/public"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50 hover:text-blue-700"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-brand-200 hover:bg-brand-50/50 hover:text-brand-600"
         >
           <GraduationCap size={18} />
           Przejdź do planu uczniów

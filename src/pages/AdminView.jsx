@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ScheduleGrid from '../components/ScheduleGrid'
 import LessonModal from '../components/LessonModal'
+import Combobox from '../components/Combobox'
 
 export default function AdminView() {
   const { signOut } = useAuth()
@@ -45,17 +46,36 @@ export default function AdminView() {
     loadLessons()
   }, [loadLessons])
 
+  // Nasłuch na zmiany w bazie — gdy inny administrator doda/usunie/zmieni
+  // lekcję w tej samej klasie, siatka odświeży się automatycznie.
+  useEffect(() => {
+    if (!selectedClass) return
+
+    const channel = supabase
+      .channel(`lessons-class-${selectedClass}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons', filter: `class_id=eq.${selectedClass}` },
+        () => loadLessons(),
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedClass, loadLessons])
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white">
               <LayoutGrid size={18} />
             </div>
             <div>
-              <div className="text-sm font-semibold text-slate-900">Panel administratora</div>
-              <div className="text-xs text-slate-500">II LO Sandomierz — plan lekcji</div>
+              <div className="font-heading text-sm font-bold text-slate-900">Panel administratora</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-brand-500">II LO Sandomierz — plan lekcji</div>
             </div>
           </div>
           <button
@@ -71,20 +91,18 @@ export default function AdminView() {
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Plan zajęć</h1>
-            <p className="text-sm text-slate-500">Kliknij puste pole, aby dodać lekcję</p>
+            <h1 className="font-heading text-xl font-extrabold text-slate-900">Plan zajęć</h1>
+            <p className="flex items-center gap-1.5 text-sm text-slate-500">
+              Kliknij puste pole, aby dodać lekcję
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                na żywo
+              </span>
+            </p>
           </div>
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:w-64"
-          >
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="w-full sm:w-64">
+            <Combobox items={classes} value={selectedClass} onChange={setSelectedClass} placeholder="Wybierz klasę…" />
+          </div>
         </div>
 
         {loading ? (
