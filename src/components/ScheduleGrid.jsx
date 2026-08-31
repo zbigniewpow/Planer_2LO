@@ -10,7 +10,7 @@ const defaultRenderCell = (lesson) => (
   </>
 )
 
-export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, renderCell = defaultRenderCell }) {
+export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, onLessonClick, renderCell = defaultRenderCell }) {
   const [mobileDay, setMobileDay] = useState(DAYS[0].value)
 
   const findLesson = (day, hour) =>
@@ -49,9 +49,19 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, re
                 </div>
                 <div className="flex-1">
                   {lesson ? (
-                    <div className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
-                      {renderCell(lesson)}
-                    </div>
+                    isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => onLessonClick(lesson)}
+                        className="w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition active:border-brand-300 active:bg-brand-100/60"
+                      >
+                        {renderCell(lesson)}
+                      </button>
+                    ) : (
+                      <div className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
+                        {renderCell(lesson)}
+                      </div>
+                    )
                   ) : isAdmin ? (
                     <button
                       type="button"
@@ -102,9 +112,19 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, re
                   return (
                     <td key={day.value} className="border-b border-l border-slate-100 p-1.5 align-top">
                       {lesson ? (
-                        <div className="h-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
-                          {renderCell(lesson)}
-                        </div>
+                        isAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => onLessonClick(lesson)}
+                            className="h-full w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition hover:border-brand-300 hover:bg-brand-100/60"
+                          >
+                            {renderCell(lesson)}
+                          </button>
+                        ) : (
+                          <div className="h-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
+                            {renderCell(lesson)}
+                          </div>
+                        )
                       ) : isAdmin ? (
                         <button
                           type="button"
