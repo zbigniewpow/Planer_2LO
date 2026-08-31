@@ -1,14 +1,18 @@
 import { useState } from 'react'
-import { X, AlertTriangle } from 'lucide-react'
+import { X, AlertTriangle, Trash2 } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { DAYS, HOURS } from '../constants/schedule'
 
-export default function LessonModal({ day, hour, classId, teachers, classrooms, subjects, onClose, onSaved }) {
-  const [subject, setSubject] = useState('')
-  const [teacherId, setTeacherId] = useState('')
-  const [classroomId, setClassroomId] = useState('')
+export default function LessonModal({ day, hour, classId, teachers, classrooms, subjects, lesson, onClose, onSaved }) {
+  const isEditMode = !!lesson
+
+  const [subject, setSubject] = useState(lesson?.subject ?? '')
+  const [teacherId, setTeacherId] = useState(lesson?.teacher_id ?? '')
+  const [classroomId, setClassroomId] = useState(lesson?.classroom_id ?? '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const dayLabel = DAYS.find((d) => d.value === day)?.label
   const hourInfo = HOURS.find((h) => h.hour === hour)
@@ -25,13 +29,20 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
     setSaving(true)
     try {
       // KROK 1: sprawdzenie kolizji — ten sam dzień i godzina,
-      // a nauczyciel LUB sala już zajęte w innej klasie.
-      const { data: conflicts, error: fetchError } = await supabase
+      // a nauczyciel LUB sala już zajęte w innej klasie. Przy edycji
+      // wykluczamy własny rekord, żeby nie wykryć kolizji sam ze sobą.
+      let conflictQuery = supabase
         .from('lessons')
         .select('id, teacher_id, classroom_id, classes(name)')
         .eq('day_of_week', day)
         .eq('lesson_hour', hour)
         .or(`teacher_id.eq.${teacherId},classroom_id.eq.${classroomId}`)
+
+      if (isEditMode) {
+        conflictQuery = conflictQuery.neq('id', lesson.id)
+      }
+
+      const { data: conflicts, error: fetchError } = await conflictQuery
 
       if (fetchError) throw fetchError
 
@@ -56,17 +67,30 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
         return
       }
 
-      // KROK 2: brak kolizji — zapis lekcji.
-      const { error: insertError } = await supabase.from('lessons').insert({
-        day_of_week: day,
-        lesson_hour: hour,
-        class_id: classId,
-        teacher_id: teacherId,
-        classroom_id: classroomId,
-        subject: subject.trim(),
-      })
+      // KROK 2: brak kolizji — zapis lekcji (dodanie albo aktualizacja).
+      if (isEditMode) {
+        const { error: updateError } = await supabase
+          .from('lessons')
+          .update({
+            teacher_id: teacherId,
+            classroom_id: classroomId,
+            subject: subject.trim(),
+          })
+          .eq('id', lesson.id)
 
-      if (insertError) throw insertError
+        if (updateError) throw updateError
+      } else {
+        const { error: insertError } = await supabase.from('lessons').insert({
+          day_of_week: day,
+          lesson_hour: hour,
+          class_id: classId,
+          teacher_id: teacherId,
+          classroom_id: classroomId,
+          subject: subject.trim(),
+        })
+
+        if (insertError) throw insertError
+      }
 
       onSaved()
       onClose()
@@ -86,12 +110,28 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    setError('')
+    try {
+      const { error: deleteError } = await supabase.from('lessons').delete().eq('id', lesson.id)
+      if (deleteError) throw deleteError
+      onSaved()
+      onClose()
+    } catch (err) {
+      setError(err.message ?? 'Nie udało się usunąć lekcji.')
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h2 className="font-heading text-lg font-bold text-slate-900">Dodaj lekcję</h2>
+            <h2 className="font-heading text-lg font-bold text-slate-900">
+              {isEditMode ? 'Edytuj lekcję' : 'Dodaj lekcję'}
+            </h2>
             <p className="text-sm text-slate-500">
               {dayLabel}, {hourInfo?.start}–{hourInfo?.end}
             </p>
@@ -161,21 +201,53 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-            >
-              Anuluj
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50"
-            >
-              {saving ? 'Zapisywanie…' : 'Dodaj lekcję'}
-            </button>
+          <div className={`flex items-center pt-1 ${isEditMode ? 'justify-between' : 'justify-end'}`}>
+            {isEditMode &&
+              (confirmingDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Na pewno?</span>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="text-xs font-semibold text-red-600 transition hover:text-red-700 disabled:opacity-50"
+                  >
+                    {deleting ? 'Usuwanie…' : 'Tak, usuń'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(false)}
+                    className="text-xs text-slate-500 transition hover:text-slate-700"
+                  >
+                    Anuluj
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-red-600 transition hover:text-red-700"
+                >
+                  <Trash2 size={14} /> Usuń lekcję
+                </button>
+              ))}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+              >
+                Anuluj
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50"
+              >
+                {saving ? 'Zapisywanie…' : isEditMode ? 'Zapisz zmiany' : 'Dodaj lekcję'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
