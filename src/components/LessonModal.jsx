@@ -3,7 +3,7 @@ import { X, AlertTriangle, Trash2 } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { DAYS, HOURS } from '../constants/schedule'
 
-export default function LessonModal({ day, hour, classId, teachers, classrooms, subjects, lesson, onClose, onSaved }) {
+export default function LessonModal({ day, hour, classId, teachers, classrooms, subjects, groupSuggestions = [], lesson, onClose, onSaved }) {
   const isEditMode = !!lesson
 
   const [subject, setSubject] = useState(lesson?.subject ?? '')
@@ -153,14 +153,20 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
             <label className="mb-1 block text-sm font-medium text-slate-700">Grupa (opcjonalnie)</label>
             <input
               type="text"
+              list="group-name-suggestions"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               placeholder="np. Grupa 1, Angielski gr. I…"
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             />
+            <datalist id="group-name-suggestions">
+              {groupSuggestions.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
             <p className="mt-1 text-xs text-slate-400">
               Zostaw puste, jeśli lekcja dotyczy całej klasy. Wypełnij, gdy klasa dzieli się na
-              równoległe grupy w tym samym terminie.
+              równoległe grupy w tym samym terminie — podpowiedzi pokażą już użyte nazwy.
             </p>
           </div>
 
