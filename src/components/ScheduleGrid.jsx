@@ -4,6 +4,9 @@ import { DAYS, HOURS } from '../constants/schedule'
 
 const defaultRenderCell = (lesson) => (
   <>
+    {lesson.group_name && (
+      <div className="text-[10px] font-bold uppercase tracking-wide text-brand-600">{lesson.group_name}</div>
+    )}
     <div className="text-sm font-semibold text-slate-900">{lesson.subject}</div>
     <div className="mt-0.5 text-xs text-slate-600">{lesson.teachers?.name}</div>
     <div className="text-xs text-slate-400">sala {lesson.classrooms?.name}</div>
@@ -13,8 +16,10 @@ const defaultRenderCell = (lesson) => (
 export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, onLessonClick, renderCell = defaultRenderCell }) {
   const [mobileDay, setMobileDay] = useState(DAYS[0].value)
 
-  const findLesson = (day, hour) =>
-    lessons.find((l) => l.day_of_week === day && l.lesson_hour === hour)
+  // Zwraca tablicę lekcji dla danego slotu — może być ich kilka, jeśli
+  // klasa dzieli się na równoległe grupy w tym samym terminie.
+  const findLessons = (day, hour) =>
+    lessons.filter((l) => l.day_of_week === day && l.lesson_hour === hour)
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -38,7 +43,7 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, on
         </div>
         <div className="divide-y divide-slate-100">
           {HOURS.map((h) => {
-            const lesson = findLesson(mobileDay, h.hour)
+            const cellLessons = findLessons(mobileDay, h.hour)
             return (
               <div key={h.hour} className="flex items-stretch gap-3 px-3 py-2.5">
                 <div className="w-14 shrink-0 pt-0.5">
@@ -47,10 +52,11 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, on
                     {h.start}–{h.end}
                   </div>
                 </div>
-                <div className="flex-1">
-                  {lesson ? (
+                <div className="flex flex-1 flex-col gap-1.5">
+                  {cellLessons.map((lesson) =>
                     isAdmin ? (
                       <button
+                        key={lesson.id}
                         type="button"
                         onClick={() => onLessonClick(lesson)}
                         className="w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition active:border-brand-300 active:bg-brand-100/60"
@@ -58,21 +64,23 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, on
                         {renderCell(lesson)}
                       </button>
                     ) : (
-                      <div className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
+                      <div key={lesson.id} className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
                         {renderCell(lesson)}
                       </div>
-                    )
-                  ) : isAdmin ? (
+                    ),
+                  )}
+                  {isAdmin && (
                     <button
                       type="button"
                       onClick={() => onCellClick(mobileDay, h.hour)}
-                      className="flex min-h-[52px] w-full items-center justify-center rounded-xl border border-dashed border-slate-200 text-slate-300 transition active:bg-brand-50 active:text-brand-500"
+                      className={`flex w-full items-center justify-center rounded-xl border border-dashed border-slate-200 text-slate-300 transition active:bg-brand-50 active:text-brand-500 ${
+                        cellLessons.length === 0 ? 'min-h-[52px]' : 'py-1.5'
+                      }`}
                     >
-                      <Plus size={18} />
+                      <Plus size={16} />
                     </button>
-                  ) : (
-                    <div className="min-h-[52px]" />
                   )}
+                  {!isAdmin && cellLessons.length === 0 && <div className="min-h-[52px]" />}
                 </div>
               </div>
             )
@@ -108,34 +116,39 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, on
                   </div>
                 </td>
                 {DAYS.map((day) => {
-                  const lesson = findLesson(day.value, h.hour)
+                  const cellLessons = findLessons(day.value, h.hour)
                   return (
                     <td key={day.value} className="border-b border-l border-slate-100 p-1.5 align-top">
-                      {lesson ? (
-                        isAdmin ? (
+                      <div className="flex h-full flex-col gap-1.5">
+                        {cellLessons.map((lesson) =>
+                          isAdmin ? (
+                            <button
+                              key={lesson.id}
+                              type="button"
+                              onClick={() => onLessonClick(lesson)}
+                              className="w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition hover:border-brand-300 hover:bg-brand-100/60"
+                            >
+                              {renderCell(lesson)}
+                            </button>
+                          ) : (
+                            <div key={lesson.id} className="rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
+                              {renderCell(lesson)}
+                            </div>
+                          ),
+                        )}
+                        {isAdmin && (
                           <button
                             type="button"
-                            onClick={() => onLessonClick(lesson)}
-                            className="h-full w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition hover:border-brand-300 hover:bg-brand-100/60"
+                            onClick={() => onCellClick(day.value, h.hour)}
+                            className={`flex w-full flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200 text-slate-300 transition hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-500 ${
+                              cellLessons.length === 0 ? 'min-h-[64px]' : 'py-1'
+                            }`}
                           >
-                            {renderCell(lesson)}
+                            <Plus size={16} />
                           </button>
-                        ) : (
-                          <div className="h-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2">
-                            {renderCell(lesson)}
-                          </div>
-                        )
-                      ) : isAdmin ? (
-                        <button
-                          type="button"
-                          onClick={() => onCellClick(day.value, h.hour)}
-                          className="flex h-full min-h-[64px] w-full items-center justify-center rounded-xl border border-dashed border-slate-200 text-slate-300 transition hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-500"
-                        >
-                          <Plus size={18} />
-                        </button>
-                      ) : (
-                        <div className="min-h-[64px]" />
-                      )}
+                        )}
+                        {!isAdmin && cellLessons.length === 0 && <div className="min-h-[64px]" />}
+                      </div>
                     </td>
                   )
                 })}
