@@ -7,6 +7,7 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
   const isEditMode = !!lesson
 
   const [subject, setSubject] = useState(lesson?.subject ?? '')
+  const [groupName, setGroupName] = useState(lesson?.group_name ?? '')
   const [teacherId, setTeacherId] = useState(lesson?.teacher_id ?? '')
   const [classroomId, setClassroomId] = useState(lesson?.classroom_id ?? '')
   const [error, setError] = useState('')
@@ -75,6 +76,7 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
             teacher_id: teacherId,
             classroom_id: classroomId,
             subject: subject.trim(),
+            group_name: groupName.trim() || null,
           })
           .eq('id', lesson.id)
 
@@ -87,6 +89,7 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
           teacher_id: teacherId,
           classroom_id: classroomId,
           subject: subject.trim(),
+          group_name: groupName.trim() || null,
         })
 
         if (insertError) throw insertError
@@ -146,6 +149,21 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Grupa (opcjonalnie)</label>
+            <input
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="np. Grupa 1, Angielski gr. I…"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              Zostaw puste, jeśli lekcja dotyczy całej klasy. Wypełnij, gdy klasa dzieli się na
+              równoległe grupy w tym samym terminie.
+            </p>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Przedmiot</label>
             <select
