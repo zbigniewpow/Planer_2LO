@@ -12,6 +12,7 @@ export default function AdminView() {
   const [teachers, setTeachers] = useState([])
   const [classrooms, setClassrooms] = useState([])
   const [subjects, setSubjects] = useState([])
+  const [groupSuggestions, setGroupSuggestions] = useState([])
   const [selectedClass, setSelectedClass] = useState('')
   const [lessons, setLessons] = useState([])
   const [loading, setLoading] = useState(false)
@@ -35,14 +36,17 @@ export default function AdminView() {
   const loadLessons = useCallback(() => {
     if (!selectedClass) return
     setLoading(true)
-    supabase
-      .from('lessons')
-      .select('*, teachers(name), classrooms(name)')
-      .eq('class_id', selectedClass)
-      .then(({ data }) => {
-        setLessons(data ?? [])
-        setLoading(false)
-      })
+    Promise.all([
+      supabase
+        .from('lessons')
+        .select('*, teachers(name), classrooms(name)')
+        .eq('class_id', selectedClass),
+      supabase.from('lessons').select('group_name').not('group_name', 'is', null),
+    ]).then(([lessonsRes, groupNamesRes]) => {
+      setLessons(lessonsRes.data ?? [])
+      setGroupSuggestions([...new Set((groupNamesRes.data ?? []).map((r) => r.group_name))].sort())
+      setLoading(false)
+    })
   }, [selectedClass])
 
   useEffect(() => {
@@ -96,7 +100,7 @@ export default function AdminView() {
           <div>
             <h1 className="font-heading text-xl font-extrabold text-slate-900">Plan zajęć</h1>
             <p className="flex items-center gap-1.5 text-sm text-slate-500">
-              Kliknij puste pole, aby dodać lekcję
+              Kliknij + aby dodać lekcję (też równoległą grupę)
               <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 na żywo
@@ -130,6 +134,7 @@ export default function AdminView() {
           teachers={teachers}
           classrooms={classrooms}
           subjects={subjects}
+          groupSuggestions={groupSuggestions}
           lesson={modalCell.lesson}
           onClose={() => setModalCell(null)}
           onSaved={loadLessons}
