@@ -115,6 +115,9 @@ export default function AdminView() {
             lessons={lessons}
             isAdmin
             onCellClick={(day, hour) => setModalCell({ day, hour })}
+            onLessonClick={(lesson) =>
+              setModalCell({ day: lesson.day_of_week, hour: lesson.lesson_hour, lesson })
+            }
           />
         )}
       </main>
@@ -127,6 +130,7 @@ export default function AdminView() {
           teachers={teachers}
           classrooms={classrooms}
           subjects={subjects}
+          lesson={modalCell.lesson}
           onClose={() => setModalCell(null)}
           onSaved={loadLessons}
         />
