@@ -3,7 +3,7 @@ import { X, AlertTriangle } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { DAYS, HOURS } from '../constants/schedule'
 
-export default function LessonModal({ day, hour, classId, teachers, classrooms, onClose, onSaved }) {
+export default function LessonModal({ day, hour, classId, teachers, classrooms, subjects, onClose, onSaved }) {
   const [subject, setSubject] = useState('')
   const [teacherId, setTeacherId] = useState('')
   const [classroomId, setClassroomId] = useState('')
@@ -108,13 +108,18 @@ export default function LessonModal({ day, hour, classId, teachers, classrooms, 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Przedmiot</label>
-            <input
-              type="text"
+            <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="np. Matematyka"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            />
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            >
+              <option value="">Wybierz przedmiot…</option>
+              {subjects.map((s) => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
