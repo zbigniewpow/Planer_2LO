@@ -11,6 +11,7 @@ export default function AdminView() {
   const [classes, setClasses] = useState([])
   const [teachers, setTeachers] = useState([])
   const [classrooms, setClassrooms] = useState([])
+  const [subjects, setSubjects] = useState([])
   const [selectedClass, setSelectedClass] = useState('')
   const [lessons, setLessons] = useState([])
   const [loading, setLoading] = useState(false)
@@ -21,10 +22,12 @@ export default function AdminView() {
       supabase.from('classes').select('*').order('name'),
       supabase.from('teachers').select('*').order('name'),
       supabase.from('classrooms').select('*').order('name'),
-    ]).then(([classesRes, teachersRes, classroomsRes]) => {
+      supabase.from('subjects').select('*').order('name'),
+    ]).then(([classesRes, teachersRes, classroomsRes, subjectsRes]) => {
       setClasses(classesRes.data ?? [])
       setTeachers(teachersRes.data ?? [])
       setClassrooms(classroomsRes.data ?? [])
+      setSubjects(subjectsRes.data ?? [])
       if (classesRes.data?.length) setSelectedClass(classesRes.data[0].id)
     })
   }, [])
@@ -123,6 +126,7 @@ export default function AdminView() {
           classId={selectedClass}
           teachers={teachers}
           classrooms={classrooms}
+          subjects={subjects}
           onClose={() => setModalCell(null)}
           onSaved={loadLessons}
         />
