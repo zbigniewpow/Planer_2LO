@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { LogIn, GraduationCap, ArrowRight } from 'lucide-react'
+import { LogIn, GraduationCap, ArrowRight, FileDown } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Home() {
@@ -94,6 +94,21 @@ export default function Home() {
           Przejdź do planu uczniów
           <ArrowRight size={16} />
         </Link>
+
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+          <FileDown size={14} />
+          <span>Drukuj plan (PDF):</span>
+          <Link to="/drukuj/klasy" className="font-semibold text-brand-500 transition hover:text-brand-600 hover:underline">
+            wszystkie klasy
+          </Link>
+          <span>·</span>
+          <Link
+            to="/drukuj/nauczyciele"
+            className="font-semibold text-brand-500 transition hover:text-brand-600 hover:underline"
+          >
+            wszyscy nauczyciele
+          </Link>
+        </div>
       </div>
     </div>
   )
