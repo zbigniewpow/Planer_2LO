@@ -82,9 +82,13 @@ export default function PublicView() {
   }, [mode, selectedId, loadLessons])
 
   const renderCell = (lesson) => {
+    const groupLabel = lesson.group_name && (
+      <div className="text-[10px] font-bold uppercase tracking-wide text-brand-600">{lesson.group_name}</div>
+    )
     if (mode === 'teacher') {
       return (
         <>
+          {groupLabel}
           <div className="text-sm font-semibold text-slate-900">{lesson.subject}</div>
           <div className="mt-0.5 text-xs text-slate-600">klasa {lesson.classes?.name}</div>
           <div className="text-xs text-slate-400">sala {lesson.classrooms?.name}</div>
@@ -94,6 +98,7 @@ export default function PublicView() {
     if (mode === 'classroom') {
       return (
         <>
+          {groupLabel}
           <div className="text-sm font-semibold text-slate-900">{lesson.subject}</div>
           <div className="mt-0.5 text-xs text-slate-600">klasa {lesson.classes?.name}</div>
           <div className="text-xs text-slate-400">{lesson.teachers?.name}</div>
@@ -102,6 +107,7 @@ export default function PublicView() {
     }
     return (
       <>
+        {groupLabel}
         <div className="text-sm font-semibold text-slate-900">{lesson.subject}</div>
         <div className="mt-0.5 text-xs text-slate-600">{lesson.teachers?.name}</div>
         <div className="text-xs text-slate-400">sala {lesson.classrooms?.name}</div>
