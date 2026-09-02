@@ -72,6 +72,64 @@ export default function AdminView() {
     }
   }, [selectedClass, loadLessons])
 
+  // Kopiuje przeciągniętą lekcję na nowy termin (ta sama klasa), z takim
+  // samym sprawdzeniem kolizji nauczyciel/sala jak przy ręcznym dodawaniu.
+  const handleLessonDrop = async (draggedLesson, targetDay, targetHour) => {
+    if (draggedLesson.day_of_week === targetDay && draggedLesson.lesson_hour === targetHour) {
+      return // upuszczono na ten sam slot, z którego przeciągnięto — nic nie rób
+    }
+
+    try {
+      const { data: conflicts, error: fetchError } = await supabase
+        .from('lessons')
+        .select('id, teacher_id, classroom_id, classes(name)')
+        .eq('day_of_week', targetDay)
+        .eq('lesson_hour', targetHour)
+        .or(`teacher_id.eq.${draggedLesson.teacher_id},classroom_id.eq.${draggedLesson.classroom_id}`)
+
+      if (fetchError) throw fetchError
+
+      const teacherConflict = conflicts?.find((c) => c.teacher_id === draggedLesson.teacher_id)
+      const roomConflict = conflicts?.find((c) => c.classroom_id === draggedLesson.classroom_id)
+
+      if (teacherConflict) {
+        const teacherName = teachers.find((t) => t.id === draggedLesson.teacher_id)?.name ?? 'Nauczyciel'
+        alert(
+          `Nie można skopiować: ${teacherName} prowadzi już w tym czasie lekcję w klasie ${teacherConflict.classes?.name ?? '—'}.`,
+        )
+        return
+      }
+
+      if (roomConflict) {
+        const roomName = classrooms.find((c) => c.id === draggedLesson.classroom_id)?.name ?? 'Sala'
+        alert(
+          `Nie można skopiować: sala ${roomName} jest już zajęta w tym czasie (klasa ${roomConflict.classes?.name ?? '—'}).`,
+        )
+        return
+      }
+
+      const { error: insertError } = await supabase.from('lessons').insert({
+        day_of_week: targetDay,
+        lesson_hour: targetHour,
+        class_id: selectedClass,
+        teacher_id: draggedLesson.teacher_id,
+        classroom_id: draggedLesson.classroom_id,
+        subject: draggedLesson.subject,
+        group_name: draggedLesson.group_name ?? null,
+      })
+
+      if (insertError) throw insertError
+
+      loadLessons()
+    } catch (err) {
+      if (err.code === '23505') {
+        alert('Nie można skopiować: ten termin (nauczyciel lub sala) jest już zajęty.')
+      } else {
+        alert(err.message ?? 'Nie udało się skopiować lekcji.')
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
@@ -100,7 +158,7 @@ export default function AdminView() {
           <div>
             <h1 className="font-heading text-xl font-extrabold text-slate-900">Plan zajęć</h1>
             <p className="flex items-center gap-1.5 text-sm text-slate-500">
-              Kliknij + aby dodać lekcję (też równoległą grupę)
+              Kliknij + aby dodać lekcję, przeciągnij aby skopiować
               <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 na żywo
@@ -122,6 +180,7 @@ export default function AdminView() {
             onLessonClick={(lesson) =>
               setModalCell({ day: lesson.day_of_week, hour: lesson.lesson_hour, lesson })
             }
+            onLessonDrop={handleLessonDrop}
           />
         )}
       </main>
