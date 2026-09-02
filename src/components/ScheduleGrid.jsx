@@ -13,17 +13,45 @@ const defaultRenderCell = (lesson) => (
   </>
 )
 
-export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, onLessonClick, renderCell = defaultRenderCell }) {
+export default function ScheduleGrid({
+  lessons,
+  isAdmin = false,
+  onCellClick,
+  onLessonClick,
+  onLessonDrop,
+  renderCell = defaultRenderCell,
+}) {
   const [mobileDay, setMobileDay] = useState(DAYS[0].value)
+  const [dragOverCell, setDragOverCell] = useState(null) // { day, hour } | null
 
   // Zwraca tablicę lekcji dla danego slotu — może być ich kilka, jeśli
   // klasa dzieli się na równoległe grupy w tym samym terminie.
   const findLessons = (day, hour) =>
     lessons.filter((l) => l.day_of_week === day && l.lesson_hour === hour)
 
+  const handleDragStart = (e, lesson) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(lesson))
+    e.dataTransfer.effectAllowed = 'copy'
+  }
+
+  const handleDragOver = (e, day, hour) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+    setDragOverCell({ day, hour })
+  }
+
+  const handleDrop = (e, day, hour) => {
+    e.preventDefault()
+    setDragOverCell(null)
+    const raw = e.dataTransfer.getData('application/json')
+    if (!raw || !onLessonDrop) return
+    const draggedLesson = JSON.parse(raw)
+    onLessonDrop(draggedLesson, day, hour)
+  }
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* Widok mobilny: zakładki dni + pionowa lista godzin */}
+      {/* Widok mobilny: zakładki dni + pionowa lista godzin (bez przeciągania — dotyk nie wspiera HTML5 drag-and-drop) */}
       <div className="sm:hidden">
         <div className="flex gap-1 overflow-x-auto border-b border-slate-100 p-2">
           {DAYS.map((day) => (
@@ -88,7 +116,7 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, on
         </div>
       </div>
 
-      {/* Widok tablet/desktop: pełna siatka */}
+      {/* Widok tablet/desktop: pełna siatka, z przeciąganiem lekcji dla admina */}
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[820px] border-collapse">
           <thead>
@@ -117,16 +145,29 @@ export default function ScheduleGrid({ lessons, isAdmin = false, onCellClick, on
                 </td>
                 {DAYS.map((day) => {
                   const cellLessons = findLessons(day.value, h.hour)
+                  const isDragOver =
+                    isAdmin && dragOverCell?.day === day.value && dragOverCell?.hour === h.hour
                   return (
-                    <td key={day.value} className="border-b border-l border-slate-100 p-1.5 align-top">
+                    <td
+                      key={day.value}
+                      className={`border-b border-l border-slate-100 p-1.5 align-top transition-colors ${
+                        isDragOver ? 'bg-brand-50/70' : ''
+                      }`}
+                      onDragOver={isAdmin ? (e) => handleDragOver(e, day.value, h.hour) : undefined}
+                      onDragLeave={isAdmin ? () => setDragOverCell(null) : undefined}
+                      onDrop={isAdmin ? (e) => handleDrop(e, day.value, h.hour) : undefined}
+                    >
                       <div className="flex h-full flex-col gap-1.5">
                         {cellLessons.map((lesson) =>
                           isAdmin ? (
                             <button
                               key={lesson.id}
                               type="button"
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, lesson)}
                               onClick={() => onLessonClick(lesson)}
-                              className="w-full rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition hover:border-brand-300 hover:bg-brand-100/60"
+                              title="Przeciągnij, aby skopiować na inny termin"
+                              className="w-full cursor-move rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-left transition hover:border-brand-300 hover:bg-brand-100/60"
                             >
                               {renderCell(lesson)}
                             </button>
