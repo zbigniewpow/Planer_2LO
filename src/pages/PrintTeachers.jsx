@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient'
 import PrintScheduleTable from '../components/PrintScheduleTable'
 import { abbreviateSubject } from '../lib/printFormat'
 
-const PER_PAGE = 6 // 2 kolumny x 3 wiersze — więcej nauczycieli niż klas, trochę gęściej
+const PER_PAGE = 8 // 2 kolumny x 4 wiersze — nauczyciel nie może mieć 2 lekcji naraz, więc tabele są płytsze niż u klas
 
 function chunk(arr, size) {
   const out = []
@@ -35,8 +35,9 @@ export default function PrintTeachers() {
   const renderLines = (lesson) =>
     [
       abbreviateSubject(lesson.subject) + (lesson.group_name ? ` (${lesson.group_name})` : ''),
-      lesson.classes?.name ? `klasa ${lesson.classes.name}` : null,
-      lesson.classrooms?.name,
+      [lesson.classes?.name ? `kl. ${lesson.classes.name}` : null, lesson.classrooms?.name]
+        .filter(Boolean)
+        .join(' · '),
     ].filter(Boolean)
 
   return (
