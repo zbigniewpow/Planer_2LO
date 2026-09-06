@@ -34,8 +34,7 @@ export default function PrintClasses() {
   const renderLines = (lesson) =>
     [
       abbreviateSubject(lesson.subject) + (lesson.group_name ? ` (${lesson.group_name})` : ''),
-      formatTeacherShort(lesson.teachers?.name),
-      lesson.classrooms?.name,
+      [formatTeacherShort(lesson.teachers?.name), lesson.classrooms?.name].filter(Boolean).join(' · '),
     ].filter(Boolean)
 
   return (
