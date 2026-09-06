@@ -8,7 +8,6 @@ export default {
         heading: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Karmazyn zmierzony bezpośrednio z 2lo-sandomierz.pl (#990000)
         brand: {
           50: '#fbebeb',
           100: '#f3d0d0',
