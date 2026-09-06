@@ -6,7 +6,7 @@ export default function PrintScheduleTable({ title, subtitle, lessons, renderLin
 
   if (compact) {
     return (
-      <section className="overflow-hidden rounded border border-slate-300 p-2">
+      <section className="break-inside-avoid overflow-hidden rounded border border-slate-300 p-2">
         <h3 className="mb-1.5 truncate text-[13px] font-bold text-slate-900">{title}</h3>
         <table className="w-full table-fixed border-collapse text-[10px] leading-[12px]">
           <thead>
