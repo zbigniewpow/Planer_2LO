@@ -29,7 +29,8 @@ export default function PrintTeachers() {
     })
   }, [])
 
-  const pages = chunk(teachers, PER_PAGE)
+  const teachersWithLessons = teachers.filter((t) => lessons.some((l) => l.teacher_id === t.id))
+  const pages = chunk(teachersWithLessons, PER_PAGE)
 
   const renderLines = (lesson) =>
     [
