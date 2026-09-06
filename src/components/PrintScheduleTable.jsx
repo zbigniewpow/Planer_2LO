@@ -11,7 +11,7 @@ export default function PrintScheduleTable({ title, subtitle, lessons, renderLin
         <table className="w-full table-fixed border-collapse text-[10px] leading-[12px]">
           <thead>
             <tr>
-              <th className="w-[7%] border border-slate-200 bg-slate-50"></th>
+              <th className="w-[13%] border border-slate-200 bg-slate-50"></th>
               {DAYS.map((day) => (
                 <th key={day.value} className="border border-slate-200 bg-slate-50 text-[10px] font-semibold">
                   {day.label.slice(0, 2)}
@@ -22,7 +22,12 @@ export default function PrintScheduleTable({ title, subtitle, lessons, renderLin
           <tbody>
             {HOURS.map((h) => (
               <tr key={h.hour}>
-                <td className="border border-slate-200 text-center text-slate-500">{h.hour + 1}</td>
+                <td className="border border-slate-200 text-center text-slate-500">
+                  <div className="font-semibold text-slate-700">{h.hour + 1}</div>
+                  <div className="text-[7px] leading-[8px]">
+                    {h.start}-{h.end}
+                  </div>
+                </td>
                 {DAYS.map((day) => {
                   const cellLessons = findLessons(day.value, h.hour)
                   return (
