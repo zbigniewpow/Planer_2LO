@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import PrintScheduleTable from '../components/PrintScheduleTable'
-import PrintHoursLegend from '../components/PrintHoursLegend'
 import { abbreviateSubject, formatTeacherShort } from '../lib/printFormat'
 
 const PER_PAGE = 4 // 2 kolumny x 2 wiersze — większe siatki, więcej stron, czytelniejszy druk
@@ -65,19 +64,16 @@ export default function PrintClasses() {
         <div className="text-center text-sm text-slate-400">Wczytywanie…</div>
       ) : (
         pages.map((group, i) => (
-          <div key={i} className="print-page">
-            <PrintHoursLegend />
-            <div className="grid grid-cols-2 gap-3">
-              {group.map((cls) => (
-                <PrintScheduleTable
-                  key={cls.id}
-                  compact
-                  title={cls.name}
-                  lessons={lessons.filter((l) => l.class_id === cls.id)}
-                  renderLines={renderLines}
-                />
-              ))}
-            </div>
+          <div key={i} className="print-page grid grid-cols-2 gap-3">
+            {group.map((cls) => (
+              <PrintScheduleTable
+                key={cls.id}
+                compact
+                title={cls.name}
+                lessons={lessons.filter((l) => l.class_id === cls.id)}
+                renderLines={renderLines}
+              />
+            ))}
           </div>
         ))
       )}
