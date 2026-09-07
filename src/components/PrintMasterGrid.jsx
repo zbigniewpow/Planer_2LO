@@ -8,7 +8,7 @@ export default function PrintMasterGrid({ columns, getCellLessons, verticalHeade
     <table className="w-full table-fixed border-collapse text-[12px] leading-[15px]">
       <colgroup>
         <col className="w-[12px]" />
-        <col className="w-[14px]" />
+        <col className="w-[46px]" />
         {columns.map((c) => (
           <col key={c.id} />
         ))}
@@ -41,8 +41,8 @@ export default function PrintMasterGrid({ columns, getCellLessons, verticalHeade
                   {day.label.slice(0, 2)}
                 </td>
               )}
-              <td className="border border-slate-300 text-center font-semibold text-slate-700">
-                {h.hour + 1}
+              <td className="whitespace-nowrap border border-slate-300 px-0.5 text-center font-semibold text-slate-700">
+                {h.hour + 1} {h.start}
               </td>
               {columns.map((col) => {
                 const cellLessons = getCellLessons(col.id, day.value, h.hour)
