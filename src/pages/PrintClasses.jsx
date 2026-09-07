@@ -2,16 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { supabase } from '../supabaseClient'
-import PrintScheduleTable from '../components/PrintScheduleTable'
-import { abbreviateSubject, formatTeacherShort } from '../lib/printFormat'
-
-const PER_PAGE = 4 // 2 kolumny x 2 wiersze — większe siatki, więcej stron, czytelniejszy druk
-
-function chunk(arr, size) {
-  const out = []
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
-  return out
-}
+import PrintMasterGrid from '../components/PrintMasterGrid'
 
 export default function PrintClasses() {
   const [classes, setClasses] = useState([])
@@ -21,7 +12,7 @@ export default function PrintClasses() {
   useEffect(() => {
     Promise.all([
       supabase.from('classes').select('*').order('name'),
-      supabase.from('lessons').select('*, teachers(name), classrooms(name)'),
+      supabase.from('lessons').select('*, classrooms(name)'),
     ]).then(([classesRes, lessonsRes]) => {
       setClasses(classesRes.data ?? [])
       setLessons(lessonsRes.data ?? [])
@@ -29,13 +20,13 @@ export default function PrintClasses() {
     })
   }, [])
 
-  const pages = chunk(classes, PER_PAGE)
+  // Zawsze dokładnie 2 strony — dzielimy listę klas na pół,
+  // niezależnie od tego ile ich jest.
+  const half = Math.ceil(classes.length / 2)
+  const groups = [classes.slice(0, half), classes.slice(half)]
 
-  const renderLines = (lesson) =>
-    [
-      abbreviateSubject(lesson.subject) + (lesson.group_name ? ` (${lesson.group_name})` : ''),
-      [formatTeacherShort(lesson.teachers?.name), lesson.classrooms?.name].filter(Boolean).join(' · '),
-    ].filter(Boolean)
+  const getCellLessons = (classId, day, hour) =>
+    lessons.filter((l) => l.class_id === classId && l.day_of_week === day && l.lesson_hour === hour)
 
   return (
     <div className="min-h-screen bg-white px-4 py-4">
@@ -51,28 +42,23 @@ export default function PrintClasses() {
           onClick={() => window.print()}
           className="flex items-center gap-1.5 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
         >
-          <Printer size={16} /> Drukuj / zapisz jako PDF (A3)
+          <Printer size={16} /> Drukuj / zapisz jako PDF (2× A3)
         </button>
       </div>
 
       <h1 className="no-print mb-3 font-heading text-base font-bold text-slate-900">
-        Plan lekcji — wszystkie klasy ({pages.length} {pages.length === 1 ? 'strona' : 'strony'} A3)
+        Plan lekcji — wszystkie klasy (2 strony A3, poziomo)
       </h1>
 
       {loading ? (
         <div className="text-center text-sm text-slate-400">Wczytywanie…</div>
       ) : (
-        pages.map((group, i) => (
-          <div key={i} className="print-page grid grid-cols-2 gap-3">
-            {group.map((cls) => (
-              <PrintScheduleTable
-                key={cls.id}
-                compact
-                title={cls.name}
-                lessons={lessons.filter((l) => l.class_id === cls.id)}
-                renderLines={renderLines}
-              />
-            ))}
+        groups.map((group, i) => (
+          <div key={i} className="print-page mb-6">
+            <PrintMasterGrid
+              columns={group.map((c) => ({ id: c.id, label: c.name }))}
+              getCellLessons={getCellLessons}
+            />
           </div>
         ))
       )}
